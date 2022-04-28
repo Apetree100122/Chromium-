@@ -102,11 +102,6 @@ DEVICE_MANIFEST_FILE += \
 	device/google/felix/nfc/manifest_nfc.xml \
 	device/google/felix/nfc/manifest_se.xml
 
-# Thermal Config
-PRODUCT_COPY_FILES += \
-	device/google/felix/thermal_info_config_felix.json:$(TARGET_COPY_OUT_VENDOR)/etc/thermal_info_config.json \
-	device/google/felix/thermal_info_config_felix_proto.json:$(TARGET_COPY_OUT_VENDOR)/etc/thermal_info_config_proto.json
-
 # Power HAL config
 PRODUCT_COPY_FILES += \
 	device/google/felix/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
@@ -184,9 +179,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PACKAGES_DEBUG += \
     sar_test
 
-# WirelessCharger
-DEVICE_PRODUCT_COMPATIBILITY_MATRIX_FILE += device/google/gs101/device_framework_matrix_product_wireless.xml
-
 # Bluetooth
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.bluetooth.a2dp_aac.vbr_supported=true
@@ -236,3 +228,7 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Set support one-handed mode
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.support_one_handed_mode=true
+
+# Hinge angle sensor
+PRODUCT_COPY_FILES += \
+	frameworks/native/data/etc/android.hardware.sensor.hinge_angle.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.hinge_angle.xml
