@@ -36,6 +36,8 @@ ifeq ($(filter factory_felix, $(TARGET_PRODUCT)),)
 include device/google/felix/uwb/uwb_calibration.mk
 endif
 
+# go/lyric-soong-variables
+$(call soong_config_set,lyric,camera_hardware,felix)
 $(call soong_config_set,lyric,tuning_product,felix)
 $(call soong_config_set,google3a_config,target_device,felix)
 
@@ -261,6 +263,10 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 # Control camera exif model/make redaction
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.camera.redact_exif=1
+
+##Audio Vendor property
+PRODUCT_PROPERTY_OVERRIDES += \
+	persist.vendor.audio.cca.enabled=true
 
 # Camera
 PRODUCT_PROPERTY_OVERRIDES += \
