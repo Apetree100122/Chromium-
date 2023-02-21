@@ -77,7 +77,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 #config of display brightness dimming
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.0.brightness.dimming.usage=1
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.1.brightness.dimming.usage=0
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.1.brightness.dimming.usage=2
 
 # Early wake up sysfs path for the secondary display
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -206,7 +206,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.build.svn=1
 
 # Vibrator HAL
-PRODUCT_PRODUCT_PROPERTIES +=\
+PRODUCT_VENDOR_PROPERTIES +=\
     ro.vendor.vibrator.hal.long.frequency.shift=0 \
     ro.vendor.vibrator.hal.gpio.num=44 \
     ro.vendor.vibrator.hal.gpio.shift=2
@@ -300,7 +300,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.camera.extended_launch_boost=1 \
     persist.vendor.camera.optimized_tnr_freq=1 \
     persist.vendor.camera.raise_buf_allocation_priority=1 \
-    camera.enable_landscape_to_portrait=true
+    camera.enable_landscape_to_portrait=true \
+    persist.vendor.camera.debug.bypass_csi_link_error=true
 
 # Bluetooth OPUS codec
 PRODUCT_PRODUCT_PROPERTIES += \
