@@ -225,7 +225,8 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 # DCK properties based on target
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.gms.dck.eligible_wcc=3
+    ro.gms.dck.eligible_wcc=3 \
+    ro.gms.dck.se_capability=1
 
 # Graphics
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.enable_frame_rate_override=true
@@ -302,6 +303,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.camera.raise_buf_allocation_priority=1 \
     camera.enable_landscape_to_portrait=true \
     persist.vendor.camera.debug.bypass_csi_link_error=true
+
+# Enable camera exif model/make reporting
+PRODUCT_VENDOR_PROPERTIES += \
+    persist.vendor.camera.exif_reveal_make_model=true
 
 # Bluetooth OPUS codec
 PRODUCT_PRODUCT_PROPERTIES += \
