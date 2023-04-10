@@ -30,8 +30,9 @@ DEVICE_PACKAGE_OVERLAYS += device/google/felix/felix/overlay
 include device/google/felix/audio/felix/audio-tables.mk
 include device/google/gs201/device-shipping-common.mk
 $(call soong_config_set,fp_hal_feature,pixel_product, product_a)
-include hardware/google/pixel/vibrator/cs40l26/device-stereo.mk
+include device/google/felix/vibrator/cs40l26/device.mk
 include device/google/gs-common/bcmbt/bluetooth.mk
+include device/google/gs-common/display/dump_second_display.mk
 include device/google/gs-common/touch/gti/gti.mk
 include device/google/gs-common/touch/stm/stm6.mk
 ifeq ($(filter factory_felix, $(TARGET_PRODUCT)),)
@@ -42,9 +43,6 @@ endif
 $(call soong_config_set,lyric,camera_hardware,felix)
 $(call soong_config_set,lyric,tuning_product,felix)
 $(call soong_config_set,google3a_config,target_device,felix)
-
-BOARD_SEPOLICY_DIRS += \
-    hardware/google/pixel-sepolicy/vibrator/common \
 
 # Init files
 PRODUCT_COPY_FILES += \
@@ -80,7 +78,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 #config of display brightness dimming
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.0.brightness.dimming.usage=1
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.1.brightness.dimming.usage=0
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += vendor.display.1.brightness.dimming.usage=2
 
 # Early wake up sysfs path for the secondary display
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -151,6 +149,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # declare use of spatial audio
 PRODUCT_PROPERTY_OVERRIDES += \
        ro.audio.spatializer_enabled=true \
+       ro.audio.spatializer_transaural_enabled_default=false \
        persist.vendor.audio.spatializer.speaker_enabled=true
 
 # Bluetooth SAR test tool
@@ -209,8 +208,10 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.build.svn=1
 
 # Vibrator HAL
-PRODUCT_PRODUCT_PROPERTIES +=\
-    ro.vendor.vibrator.hal.long.frequency.shift=0
+PRODUCT_VENDOR_PROPERTIES +=\
+    ro.vendor.vibrator.hal.long.frequency.shift=0 \
+    ro.vendor.vibrator.hal.gpio.num=44 \
+    ro.vendor.vibrator.hal.gpio.shift=2
 ACTUATOR_MODEL := luxshare_ict_lt_xlra1906d
 
 # Fingerprint
@@ -241,7 +242,8 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # SKU specific RROs
 PRODUCT_PACKAGES += \
-    SettingsOverlayG0B96
+    SettingsOverlayG0B96 \
+    SettingsOverlayG9FPL
 
 # Trusty liboemcrypto.so
 PRODUCT_SOONG_NAMESPACES += vendor/google_devices/felix/prebuilts
@@ -288,10 +290,6 @@ DEVICE_PRODUCT_COMPATIBILITY_MATRIX_FILE += device/google/felix/device_framework
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
 
-# Control camera exif model/make redaction
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.camera.redact_exif=1
-
 # Increase thread priority for nodes stop
 PRODUCT_VENDOR_PROPERTIES += \
     persist.vendor.camera.increase_thread_priority_nodes_stop=true
@@ -305,7 +303,19 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.camera.extended_launch_boost=1 \
     persist.vendor.camera.optimized_tnr_freq=1 \
     persist.vendor.camera.raise_buf_allocation_priority=1 \
-    camera.enable_landscape_to_portrait=true
+    persist.vendor.camera.start_cpu_throttling_at_moderate_thermal=1 \
+    camera.enable_landscape_to_portrait=true \
+    persist.vendor.camera.debug.bypass_csi_link_error=true \
+    vendor.camera.allow_sensor_binning_aspect_ratio_to_override_itp_output=false \
+    vendor.camera.support_specific_stream_aspect_ratio=0.75
+
+# Enable camera exif model/make reporting
+PRODUCT_VENDOR_PROPERTIES += \
+    persist.vendor.camera.exif_reveal_make_model=true
+
+# Enable front camera always binning for 720P or smaller resolution
+PRODUCT_VENDOR_PROPERTIES += \
+    persist.vendor.camera.front_720P_always_binning=true
 
 # Bluetooth OPUS codec
 PRODUCT_PRODUCT_PROPERTIES += \
@@ -317,7 +327,37 @@ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
         device/google/gs201/init.hardware.wlc.rc.userdebug:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wlc.rc
 endif
 
-# Biometrics virtual HAL for e2e testing
-PRODUCT_PACKAGES_DEBUG += \
-    android.hardware.biometrics.fingerprint-service.example
+# Bluetooth LE Audio
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.bluetooth.leaudio_offload.supported=true \
+    persist.bluetooth.leaudio_offload.disabled=false \
+    ro.bluetooth.leaudio_switcher.supported=true \
+    bluetooth.profile.bap.unicast.client.enabled=true \
+    bluetooth.profile.csip.set_coordinator.enabled=true \
+    bluetooth.profile.hap.client.enabled=true \
+    bluetooth.profile.mcp.server.enabled=true \
+    bluetooth.profile.ccp.server.enabled=true \
+    bluetooth.profile.vcp.controller.enabled=true \
 
+# Override BQR mask to enable LE Audio Choppy report
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.bqr.event_mask=262238
+else
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.bqr.event_mask=94
+endif
+
+# Bluetooth LE Audio CIS handover to SCO
+# Set the property only if the controller doesn't support CIS and SCO
+# simultaneously. More details in b/242908683.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.leaudio.notify.idle.during.call=true
+
+# LE Audio Offload Capabilities Setting
+PRODUCT_COPY_FILES += \
+    device/google/felix/bluetooth/le_audio_codec_capabilities.xml:$(TARGET_COPY_OUT_VENDOR)/etc/le_audio_codec_capabilities.xml
+
+# Bluetooth EWP test tool
+PRODUCT_PACKAGES_DEBUG += \
+    ewp_tool
