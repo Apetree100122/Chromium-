@@ -32,6 +32,7 @@ include device/google/gs201/device-shipping-common.mk
 $(call soong_config_set,fp_hal_feature,pixel_product, product_a)
 include device/google/felix/vibrator/cs40l26/device.mk
 include device/google/gs-common/bcmbt/bluetooth.mk
+include device/google/gs-common/display/dump_second_display.mk
 include device/google/gs-common/touch/gti/gti.mk
 include device/google/gs-common/touch/stm/stm6.mk
 ifeq ($(filter factory_felix, $(TARGET_PRODUCT)),)
@@ -148,6 +149,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # declare use of spatial audio
 PRODUCT_PROPERTY_OVERRIDES += \
        ro.audio.spatializer_enabled=true \
+       ro.audio.spatializer_transaural_enabled_default=false \
        persist.vendor.audio.spatializer.speaker_enabled=true
 
 # Bluetooth SAR test tool
@@ -203,7 +205,7 @@ PRODUCT_SOONG_NAMESPACES += \
 
 # Increment the SVN for any official public releases
 PRODUCT_VENDOR_PROPERTIES += \
-    ro.vendor.build.svn=1
+    ro.vendor.build.svn=10
 
 # Vibrator HAL
 PRODUCT_VENDOR_PROPERTIES +=\
@@ -240,7 +242,8 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # SKU specific RROs
 PRODUCT_PACKAGES += \
-    SettingsOverlayG0B96
+    SettingsOverlayG0B96 \
+    SettingsOverlayG9FPL
 
 # Trusty liboemcrypto.so
 PRODUCT_SOONG_NAMESPACES += vendor/google_devices/felix/prebuilts
@@ -297,15 +300,23 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Camera
 PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.camera.adjust_backend_min_freq_for_1p_front_video_1080p_30fps=1 \
     persist.vendor.camera.extended_launch_boost=1 \
     persist.vendor.camera.optimized_tnr_freq=1 \
     persist.vendor.camera.raise_buf_allocation_priority=1 \
+    persist.vendor.camera.start_cpu_throttling_at_moderate_thermal=1 \
     camera.enable_landscape_to_portrait=true \
-    persist.vendor.camera.debug.bypass_csi_link_error=true
+    persist.vendor.camera.debug.bypass_csi_link_error=true \
+    vendor.camera.allow_sensor_binning_aspect_ratio_to_override_itp_output=false \
+    vendor.camera.support_specific_stream_aspect_ratio=0.75
 
 # Enable camera exif model/make reporting
 PRODUCT_VENDOR_PROPERTIES += \
     persist.vendor.camera.exif_reveal_make_model=true
+
+# Enable front camera always binning for 720P or smaller resolution
+PRODUCT_VENDOR_PROPERTIES += \
+    persist.vendor.camera.front_720P_always_binning=true
 
 # Bluetooth OPUS codec
 PRODUCT_PRODUCT_PROPERTIES += \
@@ -317,7 +328,37 @@ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
         device/google/gs201/init.hardware.wlc.rc.userdebug:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.wlc.rc
 endif
 
-# Biometrics virtual HAL for e2e testing
-PRODUCT_PACKAGES_DEBUG += \
-    android.hardware.biometrics.fingerprint-service.example
+# Bluetooth LE Audio
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.bluetooth.leaudio_offload.supported=true \
+    persist.bluetooth.leaudio_offload.disabled=false \
+    ro.bluetooth.leaudio_switcher.supported=true \
+    bluetooth.profile.bap.unicast.client.enabled=true \
+    bluetooth.profile.csip.set_coordinator.enabled=true \
+    bluetooth.profile.hap.client.enabled=true \
+    bluetooth.profile.mcp.server.enabled=true \
+    bluetooth.profile.ccp.server.enabled=true \
+    bluetooth.profile.vcp.controller.enabled=true \
 
+# Override BQR mask to enable LE Audio Choppy report
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.bqr.event_mask=262238
+else
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.bqr.event_mask=94
+endif
+
+# Bluetooth LE Audio CIS handover to SCO
+# Set the property only if the controller doesn't support CIS and SCO
+# simultaneously. More details in b/242908683.
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.bluetooth.leaudio.notify.idle.during.call=true
+
+# LE Audio Offload Capabilities Setting
+PRODUCT_COPY_FILES += \
+    device/google/felix/bluetooth/le_audio_codec_capabilities.xml:$(TARGET_COPY_OUT_VENDOR)/etc/le_audio_codec_capabilities.xml
+
+# Bluetooth EWP test tool
+PRODUCT_PACKAGES_DEBUG += \
+    ewp_tool
