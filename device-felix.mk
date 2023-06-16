@@ -205,7 +205,7 @@ PRODUCT_SOONG_NAMESPACES += \
 
 # Increment the SVN for any official public releases
 PRODUCT_VENDOR_PROPERTIES += \
-    ro.vendor.build.svn=12
+    ro.vendor.build.svn=13
 
 # Vibrator HAL
 PRODUCT_VENDOR_PROPERTIES +=\
@@ -303,6 +303,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.camera.adjust_backend_min_freq_for_1p_front_video_1080p_30fps=1 \
     persist.vendor.camera.extended_launch_boost=1 \
+    persist.vendor.camera.multicam_streaming_boost=1 \
     persist.vendor.camera.optimized_tnr_freq=1 \
     persist.vendor.camera.raise_buf_allocation_priority=1 \
     persist.vendor.camera.start_cpu_throttling_at_moderate_thermal=1 \
