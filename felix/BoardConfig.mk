@@ -18,8 +18,20 @@ TARGET_BOOTLOADER_BOARD_NAME := felix
 TARGET_SCREEN_DENSITY := 420
 BOARD_USES_GENERIC_AUDIO := true
 USES_DEVICE_GOOGLE_FELIX := true
+BOARD_KERNEL_CMDLINE += swiotlb=noforce
+
+# Enable load module in parallel
+BOARD_BOOTCONFIG += androidboot.load_modules_parallel=true
+
+# The modules which need to be loaded in sequential
+BOARD_KERNEL_CMDLINE += exynos_drm.load_sequential=1
+BOARD_KERNEL_CMDLINE += panel-samsung-ana6707-f10.load_sequential=1
+
+#Display
+USES_IDISPLAY_INTF_SEC := true
 
 include device/google/gs201/BoardConfig-common.mk
 -include vendor/google_devices/gs201/prebuilts/BoardConfigVendor.mk
 -include vendor/google_devices/felix/proprietary/BoardConfigVendor.mk
 include device/google/felix-sepolicy/felix-sepolicy.mk
+include device/google/felix/wifi/BoardConfig-wifi.mk
