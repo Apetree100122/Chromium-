@@ -23,4 +23,8 @@
 
     <!-- Location on the screen of the center of the physical fingerprint sensor -->
     <dimen name="physical_fingerprint_sensor_center_screen_location_x">2208px</dimen>
+
+    <!-- Lock pattern view size, align sysui biometric_auth_pattern_view_size -->
+    <dimen name="biometric_auth_pattern_view_size">298dp</dimen>
+    <dimen name="biometric_auth_pattern_view_max_size">348dp</dimen>
 </resources>
