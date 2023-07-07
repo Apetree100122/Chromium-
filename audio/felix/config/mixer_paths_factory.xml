@@ -8,6 +8,7 @@
     <ctl name="E Main AMP Enable Switch" value="0" />
     <ctl name="MIC HW Gain At Lower Power Mode (cB)" value="-160" />
     <ctl name="MIC HW Gain At High Power Mode (cB)" value="0" />
+    <ctl name="MIC Record Soft Gain (dB)" value="0"/>
 
     <ctl name="EP1 TX Mixer TDM_0_TX" value="0" />
     <ctl name="DEFAULT_MIC_ID" value="0" />
@@ -33,6 +34,7 @@
 
     <path name="mfg-record usb-headset-mic">
         <ctl name="Audio Capture Mic Source" value="USB_MIC"/>
+        <ctl name="USB Playback EP ID v2" value="0" />
         <ctl name="USB Capture FORMAT v2" value="1" />
         <ctl name="USB Config To AoC v2" value="1"/>
         <ctl name="EP1 TX Mixer USB_TX" value="1"/>
@@ -88,7 +90,7 @@
     </path>
 
     <path name="usb-capture-gain">
-        <ctl name="Headset Capture Volume" />
+        <ctl name="MIC Record Soft Gain (dB)" />
     </path>
 
     <path name="mic1-only">
@@ -136,7 +138,7 @@
         <ctl name="ASPTX2 Slot Position" value="4" />
         <ctl name="ASPTX3 Slot Position" value="5" />
         <ctl name="ASPTX4 Slot Position" value="6" />
-        <ctl name="E ASP TX1 Source" value="ASPRX1" />
+        <ctl name="E ASP TX1 Source" value="VMON" />
         <ctl name="E ASP TX2 Source" value="Zero" />
         <ctl name="E ASP TX3 Source" value="Zero" />
         <ctl name="E ASP TX4 Source" value="Zero" />
@@ -144,7 +146,7 @@
         <ctl name="R ASP TX2 Source" value="ASPRX1" />
         <ctl name="R ASP TX3 Source" value="Zero" />
         <ctl name="R ASP TX4 Source" value="Zero" />
-        <ctl name="ASP TX1 Source" value="ASPRX1" />
+        <ctl name="ASP TX1 Source" value="VMON" />
         <ctl name="ASP TX2 Source" value="Zero" />
         <ctl name="ASP TX3 Source" value="Zero" />
         <ctl name="ASP TX4 Source" value="Zero" />
@@ -282,6 +284,7 @@
 
     <path name="mfg-playback usb-headphones">
         <ctl name="USB Dev ID v2" value="2" />
+        <ctl name="USB Capture EP ID v2" value="0" />
         <ctl name="USB Playback EP ID v2" value="1" />
         <ctl name="USB Playback FORMAT v2" value="6" />
         <ctl name="USB Playback SR v2" value="48000" />
