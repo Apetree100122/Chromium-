@@ -19,6 +19,7 @@
 #include <dataproviders/DisplayStateResidencyDataProvider.h>
 #include <dataproviders/GenericStateResidencyDataProvider.h>
 #include <dataproviders/PowerStatsEnergyConsumer.h>
+#include <DevfreqStateResidencyDataProvider.h>
 #include <Gs201CommonDataProviders.h>
 #include <PowerStatsAidl.h>
 
@@ -27,43 +28,53 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <log/log.h>
+#include <sys/stat.h>
 
+using aidl::android::hardware::power::stats::DevfreqStateResidencyDataProvider;
 using aidl::android::hardware::power::stats::DisplayStateResidencyDataProvider;
 using aidl::android::hardware::power::stats::EnergyConsumerType;
 using aidl::android::hardware::power::stats::GenericStateResidencyDataProvider;
 using aidl::android::hardware::power::stats::PowerStatsEnergyConsumer;
 
 void addDisplay(std::shared_ptr<PowerStats> p) {
-    // Add display residency stats
-    std::vector<std::string> states = {
+    // Add display residency stats for inner display
+    std::vector<std::string> inner_states = {
         "Off",
-        "LP: 1440x3120@1",
-        "LP: 1440x3120@10",
-        "LP: 1440x3120@30",
-        "On: 1440x3120@60",
-        "On: 1440x3120@90",
-        "On: 1440x3120@120",
-        "HBM: 1440x3120@60",
-        "HBM: 1440x3120@90",
-        "HBM: 1440x3120@120"};
+        "LP: 1840x2208@1",
+        "LP: 1840x2208@30",
+        "On: 1840x2208@1",
+        "On: 1840x2208@10",
+        "On: 1840x2208@60",
+        "On: 1840x2208@120",
+        "HBM: 1840x2208@60",
+        "HBM: 1840x2208@120"};
 
     p->addStateResidencyDataProvider(std::make_unique<DisplayStateResidencyDataProvider>(
-            "Display",
+            "Inner Display",
             "/sys/class/backlight/panel0-backlight/state",
-            states));
+            inner_states));
+
+    // Add display residency stats for outer display
+    std::vector<std::string> outer_states = {
+        "Off",
+        "LP: 1080x2092@30",
+        "On: 1080x2092@10",
+        "On: 1080x2092@60",
+        "On: 1080x2092@120",
+        "HBM: 1080x2092@60",
+        "HBM: 1080x2092@120"};
+
+    p->addStateResidencyDataProvider(std::make_unique<DisplayStateResidencyDataProvider>(
+            "Outer Display",
+            "/sys/class/backlight/panel1-backlight/state",
+            outer_states));
 
     // Add display energy consumer
-    p->addEnergyConsumer(PowerStatsEnergyConsumer::createMeterAndEntityConsumer(
-            p, EnergyConsumerType::DISPLAY, "display", {"PPVAR_VSYS_PWR_DISP"}, "Display",
-            {{"LP: 1440x3120@1", 1},
-             {"LP: 1440x3120@10", 2},
-             {"LP: 1440x3120@30", 3},
-             {"On: 1440x3120@60", 4},
-             {"On: 1440x3120@90", 5},
-             {"On: 1440x3120@120", 6},
-             {"HBM: 1440x3120@60", 7},
-             {"HBM: 1440x3120@90", 8},
-             {"HBM: 1440x3120@120", 9}}));
+    p->addEnergyConsumer(PowerStatsEnergyConsumer::createMeterConsumer(
+            p,
+            EnergyConsumerType::DISPLAY,
+            "Display",
+            {"VSYS_PWR_DISPLAY"}));// VSYS_PWR_DISPLAY = inner + outer
 }
 
 void addUwb(std::shared_ptr<PowerStats> p) {
@@ -99,6 +110,49 @@ void addUwb(std::shared_ptr<PowerStats> p) {
             "/sys/devices/platform/10db0000.spi/spi_master/spi16/spi16.0/uwb/power_stats", cfgs));
 }
 
+void addGPU(std::shared_ptr<PowerStats> p) {
+    std::map<std::string, int32_t> stateCoeffs;
+
+    // Add GPU state residency
+    p->addStateResidencyDataProvider(std::make_unique<DevfreqStateResidencyDataProvider>(
+            "GPU",
+            "/sys/devices/platform/28000000.mali"));
+
+    // Add GPU energy consumer
+    stateCoeffs = {
+        {"202000",  890},
+        {"251000", 1102},
+        {"302000", 1308},
+        {"351000", 1522},
+        {"400000", 1772},
+        {"471000", 2105},
+        {"510000", 2292},
+        {"572000", 2528},
+        {"701000", 3127},
+        {"762000", 3452},
+        {"848000", 4044}};
+
+    p->addEnergyConsumer(PowerStatsEnergyConsumer::createMeterAndAttrConsumer(
+            p,
+            EnergyConsumerType::OTHER,
+            "GPU",
+            {"S2S_VDD_G3D", "S8S_VDD_G3D_L2"},
+            {{UID_TIME_IN_STATE, "/sys/devices/platform/28000000.mali/uid_time_in_state"}},
+            stateCoeffs));
+}
+
+std::string getNfcPath() {
+    struct stat buffer;
+    int size = 128;
+    char path[size];
+    for (int i = 0; i < 10; i++) {
+        std::snprintf(path, size,
+                "/sys/devices/platform/10970000.hsi2c/i2c-%d/i2c-st21nfc/power_stats", i);
+        if (!stat(path, &buffer)) break;
+    }
+    return std::string(path);
+}
+
 int main() {
     LOG(INFO) << "Pixel PowerStats HAL AIDL Service is starting.";
 
@@ -107,10 +161,24 @@ int main() {
 
     std::shared_ptr<PowerStats> p = ndk::SharedRefBase::make<PowerStats>();
 
-    addGs201CommonDataProviders(p);
+    setEnergyMeter(p);
+    addAoC(p);
+    addPixelStateResidencyDataProvider(p);
+    addCPUclusters(p);
     addDisplay(p);
+    addSoC(p);
+    addGNSS(p);
+    addMobileRadio(p);
+    addPCIe(p);
+    addWifi(p);
+    addTPU(p);
+    addUfs(p);
+    addNFC(p, getNfcPath());
     addUwb(p);
-    addNFC(p, "/sys/devices/platform/10970000.hsi2c/i2c-4/i2c-st21nfc/power_stats");
+    addPowerDomains(p);
+    addDevfreq(p);
+    addGPU(p);
+    addDvfsStats(p);
 
     const std::string instance = std::string() + PowerStats::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(p->asBinder().get(), instance.c_str());
